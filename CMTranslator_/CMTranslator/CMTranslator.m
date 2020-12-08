@@ -30,7 +30,7 @@
     [_Text_From.contentView setWantsLayer:YES];
     From.alignment = NSTextAlignmentCenter;
     _Text_From.contentView.layer.cornerRadius = 9;
-    From.string = @"Hello";
+    From.string = @"Hello world";
 
     
     // To text_view
@@ -72,36 +72,46 @@ NSTextView *To;
     
     From = _Text_From.documentView;
     To = _Text_To.documentView;
-    
-    
-    NSCharacterSet *NSet = [NSCharacterSet URLHostAllowedCharacterSet];
-    NSString *From_Text_Encoded = [From.string stringByAddingPercentEncodingWithAllowedCharacters:NSet];
-    
-    
-    
-    // Check https://cloud.google.com/translate/docs/setup
-    // *It not for free
-    NSString *API_Key = @"YOUR_GOOGLE_TRANSLATE_API_KEY";
-    
+     
     
     NSString *CallLink = nil;
-    
+   
     if (_Auto_Lang.state == 1)
-    CallLink = [NSString stringWithFormat:@"https://translation.googleapis.com/language/translate/v2?key=%@&q=%@&target=%@",API_Key,From_Text_Encoded,_Lang_To.stringValue];
+    CallLink = [NSString stringWithFormat:@"https://dev.microsofttranslator.com/translate?api-version=3.0&to=%@",_Lang_To.stringValue];
     else
-    CallLink = [NSString stringWithFormat:@"https://translation.googleapis.com/language/translate/v2?key=%@&q=%@&target=%@&source=%@",API_Key,From_Text_Encoded,_Lang_To.stringValue,_Lang_From.stringValue];
+    CallLink = [NSString stringWithFormat:@"https://dev.microsofttranslator.com/translate?api-version=3.0&from=%@&to=%@",_Lang_From.stringValue,_Lang_To.stringValue];
 
 
-    
-          NSURL *URL = [NSURL URLWithString:CallLink];
-          NSData *Data = [NSData dataWithContentsOfURL:URL];
-          NSDictionary *Finder = [NSJSONSerialization JSONObjectWithData:Data options:0 error:nil];
-          NSString *Translated =  Finder[@"data"][@"translations"][0][@"translatedText"];
-    
-    
-    if (Translated) {
+    NSURL *URL = [NSURL URLWithString:CallLink];
 
-        To.string = Translated;
+    NSMutableURLRequest *Request = [[NSMutableURLRequest alloc] init];
+
+    NSString *Parameters = [NSString stringWithFormat:@"[{\"text\" : \"%@\"}]",From.string];
+
+    [Request setHTTPMethod:@"POST"];
+
+    [Request setURL:URL];
+
+    [Request addValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    [Request addValue:@"62fcdf528528442a84ff159d8cb66466" forHTTPHeaderField:@"Ocp-Apim-Subscription-Key"];
+    [Request addValue:@"A14C9DB9-0DED-48D7-8BBE-C517A1A8DBB0" forHTTPHeaderField:@"X-ClintTraceID"];
+
+    NSData *PostData = [Parameters dataUsingEncoding:NSUTF8StringEncoding];
+
+    [Request setHTTPBody:PostData];
+
+    NSData *_Data = [NSURLConnection sendSynchronousRequest:Request returningResponse:nil error:nil];
+    
+    NSMutableArray *Converter = [NSJSONSerialization JSONObjectWithData:_Data options:0 error:nil];
+    
+    NSDictionary *Dictionay = [Converter firstObject];
+    NSString *Translated_Text = Dictionay[@"translations"][0][@"text"];
+    
+    NSLog(@"Translated_Text === %@",Translated_Text);
+    
+    if (Translated_Text) {
+
+        To.string = Translated_Text;
 
     }
     
