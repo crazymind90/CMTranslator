@@ -1,6 +1,6 @@
 # CMTranslator
 
-Translator , using Google' api
+Translator , using Microsoft Translator' api
 
 
 # Supports MacOS 10.11 or later
